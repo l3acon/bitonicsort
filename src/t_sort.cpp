@@ -228,6 +228,8 @@ bool testSortingAlgorithm(int maxN,const SortingAlgorithm & algo)
   data_t * b = new data_t[maxN];
   for (int i=0;i<maxN;i++)
   {
+
+/* PROBABLY NOT THE BEST WAY TO MAKE RAND FLOATS */
 #if 1
     cl_uint x = (cl_uint)0;
     x = (x << 14) | ((cl_uint)rand() & 0x3FFF);
