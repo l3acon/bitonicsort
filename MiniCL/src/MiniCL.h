@@ -354,18 +354,19 @@ END:
     return clFinish(mQueue[device]);
   }
 
-  /** Enqueue a barrier in command queue.
+  /** Enqueue a barrier in command queue. 
    *
       @param device is the device index (0 = first device of context, etc.).
 
       @return an OpenCL status. */
-/* DECLARED IN /AMDAPP/OPENCL
+
+/* DECLARED IN /AMDAPP/OPENCL */
   inline cl_int enqueueBarrier(int device)
   {
     if (device < 0 || device >= (int)mDevice.size()) return CL_INVALID_DEVICE;
     return clEnqueueBarrier(mQueue[device]);
   }
-*/
+
   /** Create a buffer.
 
       @param flags are the CL_MEM_XXX flags passed to clCreateBuffer.

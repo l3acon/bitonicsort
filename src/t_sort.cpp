@@ -1,5 +1,4 @@
-// Simple sort    for (int it=1;it<=1<<20 && ok;it<<=1)
-
+// Simple sort
 // EB Jun 2011
 
 #include <MiniCL.h>
@@ -15,10 +14,10 @@
 #define CONFIG_USE_VALUE 0
 
 // Select tests to run (set to 0 or 1)
-#define TEST_PARALLEL_SELECTION       1
-#define TEST_PARALLEL_SELECTION_BLOCK 1
-#define TEST_PARALLEL_SELECTION_LOCAL 1
-#define TEST_PARALLEL_MERGE_LOCAL     1
+#define TEST_PARALLEL_SELECTION       0
+#define TEST_PARALLEL_SELECTION_BLOCK 0
+#define TEST_PARALLEL_SELECTION_LOCAL 0
+#define TEST_PARALLEL_MERGE_LOCAL     0
 #define TEST_PARALLEL_BITONIC_LOCAL   1
 #define TEST_PARALLEL_BITONIC_A       1
 #define TEST_PARALLEL_BITONIC_B       1
@@ -172,7 +171,6 @@ public:
   virtual void printID() const { printf("Copy\n"); }
 };
 
-/*
 class ParallelSelectionSort : public SortingAlgorithm
 {
 public:
@@ -260,7 +258,7 @@ public:
 private:
   int mWG;
 };
-*/
+
 class ParallelBitonicLocalSort : public SortingAlgorithm
 {
 public:
@@ -283,7 +281,6 @@ private:
   int mWG;
 };
 
-/*
 class ParallelBitonicASort : public SortingAlgorithm
 {
 public:
@@ -321,9 +318,7 @@ public:
   bool checkOutput(int n,const data_t * in,const data_t * out) const { return checkOutputFullSorted(n,in,out); }
   void printID() const { printf("Parallel bitonic A\n"); }
 };
-*/
 
-/*
 class ParallelBitonicBSort : public SortingAlgorithm
 {
 public:
@@ -407,10 +402,7 @@ public:
     printf("\n");
   }
 };
-*/
 
-
-/*
 class ParallelBitonicCSort : public SortingAlgorithm
 {
 public:
@@ -508,7 +500,6 @@ public:
     mLastN = n;
     return true;
   }
-
   double memoryIO(int n) const
   {
     double x = (double)n;
@@ -533,7 +524,7 @@ public:
 private:
   mutable int mLastN;
 };
-*/
+
 // Test a sorting algorithm
 bool testSortingAlgorithm(int maxN,const SortingAlgorithm & algo)
 {
@@ -549,7 +540,7 @@ bool testSortingAlgorithm(int maxN,const SortingAlgorithm & algo)
   clReleaseContext(clContext);
   if (c == 0) { printf("%s\n",errorMsg.c_str()); exit(1); }
   int targetDevice = c->getNDevices() - 1; // Run on last available device (assuming the X server is running on the first device)
-  //printf("Initialization OK [%s] targetDevice=%d\n",options,targetDevice);
+  // printf("Initialization OK [%s] targetDevice=%d\n",options,targetDevice);
   printf("____________________________________________________________\n");
 #if CONFIG_USE_VALUE
   printf("Key+Value / ");
@@ -557,12 +548,13 @@ bool testSortingAlgorithm(int maxN,const SortingAlgorithm & algo)
   printf("Key / ");
 #endif
   algo.printID();
-  
+
   // Setup test vector
   data_t * a = new data_t[maxN];
   data_t * b = new data_t[maxN];
   for (int i=0;i<maxN;i++)
   {
+/* THIS MIGHT NOT BE THE BEST WAY TO GENERATE RAND FLOATS */
 #if 1
     cl_uint x = (cl_uint)0;
     x = (x << 14) | ((cl_uint)rand() & 0x3FFF);
@@ -575,28 +567,29 @@ bool testSortingAlgorithm(int maxN,const SortingAlgorithm & algo)
   }
 
   bool ok = true;
-  for (int n = 256; n <= maxN && ok; n <<= 1)
+  for (int n=256;n<=maxN && ok;n<<=1)
   {
-    size_t sz = n * sizeof(data_t);
-    cl_mem inBuffer = c -> createBuffer(CL_MEM_READ_ONLY,sz,0);
-    cl_mem outBuffer = c -> createBuffer(CL_MEM_READ_WRITE,sz,0);
+    // if (n < maxN) continue; // DEBUG
 
-    double bdt = getRealTime();
+    // Test for N
+    size_t sz = n * sizeof(data_t);
+    cl_mem inBuffer = c->createBuffer(CL_MEM_READ_ONLY,sz,0);
+    cl_mem outBuffer = c->createBuffer(CL_MEM_READ_WRITE,sz,0);
     Event e;
-    double t0 = getRealTime();
     e = c->enqueueWrite(targetDevice,inBuffer,true,0,sz,a,EventVector()); // blocking
     c->finish(targetDevice);
 
+    double t0 = getRealTime();
     double dt = 0;
     double nit = 0;
-    for (int it = 1; it <= 1 << 20 && ok; it <<= 1)
+    for (int it=1;it<=1<<20 && ok;it<<=1)
     {
-      for (int i = 0; i < it && ok; i++)
+      for (int i=0;i<it && ok;i++)
       {
         ok &= algo.sort(c,targetDevice,n,inBuffer,outBuffer);
         c->finish(targetDevice);
       }
-      dt = getRealTime() - t0; 
+      dt = getRealTime() - t0;
       nit += (double)it;
       if (dt > 0.5) break; // min time
     }
@@ -605,10 +598,9 @@ bool testSortingAlgorithm(int maxN,const SortingAlgorithm & algo)
 
     e = c->enqueueRead(targetDevice,outBuffer,true,0,sz,b,EventVector()); // blocking
     double u = 1.0e-6 * (double)n/dt;
-    bdt = getRealTime() - bdt;
-    printf("N=2^%d  R=%.2f Mkeys/s  dt:%f  bdt:%f\n",log2(n),u,dt,bdt);
+    printf("N=2^%d  R=%.2f Mkeys/s\n",log2(n),u);
 
-   ok &= algo.checkOutput(n,a,b);
+    ok &= algo.checkOutput(n,a,b);
 #if 0
     // Check debug output is all 0
     for (int i=0;i<n;i++)
@@ -643,9 +635,7 @@ int main(int argc,char ** argv)
 {
   srand((unsigned int)time(0));
   bool ok = true;
-  int maxN = 1<<25;
-
-/*	other testing down here
+  int maxN = 1<<24;
 #if TEST_PARALLEL_SELECTION
   ok &= testSortingAlgorithm(maxN,ParallelSelectionSort());
 #endif
@@ -667,15 +657,12 @@ int main(int argc,char ** argv)
     ok &= testSortingAlgorithm(maxN,ParallelMergeLocalSort(wg));
   }
 #endif
-*/
 #if TEST_PARALLEL_BITONIC_LOCAL
-  for (int wg=32;wg<=256 && ok;wg<<=1)
+  for (int wg=1;wg<=256 && ok;wg<<=1)
   {
     ok &= testSortingAlgorithm(maxN,ParallelBitonicLocalSort(wg));
   }
-
 #endif
-/*
 #if TEST_PARALLEL_BITONIC_A
   ok &= testSortingAlgorithm(maxN,ParallelBitonicASort());
 #endif
@@ -685,7 +672,5 @@ int main(int argc,char ** argv)
 #if TEST_PARALLEL_BITONIC_C
   ok &= testSortingAlgorithm(maxN,ParallelBitonicCSort());
 #endif
-
-*/  
   return 0;
 }
