@@ -56,24 +56,26 @@ using namespace MINICL_NAMESPACE;
 extern const char * OpenCLKernelSource;
 enum Kernels {
   COPY_KERNEL,
-  PARALLEL_SELECTION_KERNEL,
-  PARALLEL_SELECTION_BLOCKS_KERNEL,
-  PARALLEL_SELECTION_LOCAL_KERNEL,
-  PARALLEL_MERGE_LOCAL_KERNEL,
-  PARALLEL_BITONIC_LOCAL_KERNEL,
-  PARALLEL_BITONIC_A_KERNEL,
-  PARALLEL_BITONIC_B2_KERNEL,
-  PARALLEL_BITONIC_B4_KERNEL,
-  PARALLEL_BITONIC_B8_KERNEL,
-  PARALLEL_BITONIC_B16_KERNEL,
-  PARALLEL_BITONIC_C2_KERNEL,
-  PARALLEL_BITONIC_C4_KERNEL,
+  //PARALLEL_SELECTION_KERNEL,
+  //PARALLEL_SELECTION_BLOCKS_KERNEL,
+  //PARALLEL_SELECTION_LOCAL_KERNEL,
+  //PARALLEL_MERGE_LOCAL_KERNEL,
+ PARALLEL_BITONIC_LOCAL_KERNEL,
+  //PARALLEL_BITONIC_A_KERNEL,
+  //PARALLEL_BITONIC_B2_KERNEL,
+  //PARALLEL_BITONIC_B4_KERNEL,
+  //PARALLEL_BITONIC_B8_KERNEL,
+  //PARALLEL_BITONIC_B16_KERNEL,
+  //PARALLEL_BITONIC_C2_KERNEL,
+  //PARALLEL_BITONIC_C4_KERNEL,
   NB_KERNELS
 };
 const char * KernelNames[NB_KERNELS+1] = {
-  "Copy","ParallelSelection","ParallelSelection_Blocks","ParallelSelection_Local", "ParallelMerge_Local", "ParallelBitonic_Local",
-  "ParallelBitonic_A", "ParallelBitonic_B2", "ParallelBitonic_B4", "ParallelBitonic_B8", "ParallelBitonic_B16",
-  "ParallelBitonic_C2", "ParallelBitonic_C4",
+  "Copy",
+//"ParallelSelection","ParallelSelection_Blocks","ParallelSelection_Local", "ParallelMerge_Local", 
+"ParallelBitonic_Local",
+ //"ParallelBitonic_A", "ParallelBitonic_B2", "ParallelBitonic_B4", "ParallelBitonic_B8", "ParallelBitonic_B16",
+  //"ParallelBitonic_C2", "ParallelBitonic_C4",
   0 };
 
 // Sorting algorithm base class
@@ -242,7 +244,7 @@ bool testSortingAlgorithm(int maxN,const SortingAlgorithm & algo)
   }
 
   bool ok = true;
-  for (int n = 256; n <= maxN && ok; n <<= 1)
+  for (int n = 2; n <= maxN && ok; n <<= 1)
   {
     size_t sz = n * sizeof(data_t);
     cl_mem inBuffer = c -> createBuffer(CL_MEM_READ_ONLY,sz,0);
