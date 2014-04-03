@@ -5,7 +5,7 @@ SRCDIR := src
 BUILDDIR := build
 
 #these might not necessarily be right
-AMDAPPDIR :=/opt/AMDAPP/include/
+AMDAPPDIR :=/opt/AMDAPP
 NVIDIASDKDIR :=/usr/local/cuda
 INTELSDKDIR :=/usr/lib64/OpenCL/vendors/intel
 
@@ -33,7 +33,7 @@ endif
 #assume this works for all macs
 ifeq ($(UNAME_S),Darwin)
     FW := -framework OpenCL
-    LIBDIR := /usr/local/include
+    LIBDIR := /usr/local
     LIB := -lm	#mac doesn't have "linux real time"
 endif
 
@@ -43,10 +43,10 @@ SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 HEADERS := $(shell find $(SRCDIR) -type f $(HDRPAT))
 ALLDEP += $(HEADERS)
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
-INC := -I include -I$(LIBDIR)
+INC := -I include -I$(LIBDIR)/include/ -I$(LIBDIR)/lib/
 
 all: $(OBJECTS)
-	@echo "$(CC) $(CFLAGS) $(LIB) $(FW) -I /opt/AMDAPP/lib/ $(INC) -o build/out $(OBJECTS)" ; $(CC) $(CFLAGS) $(LIB) $(FW) $(INC) -o build/out $(OBJECTS)
+	@echo "$(CC) $(CFLAGS) $(LIB) $(FW) $(INC) -o build/out $(OBJECTS)" ; $(CC) $(CFLAGS) $(LIB) $(FW) $(INC) -o build/out $(OBJECTS)
 
 $(BUILDDIR)/%.o:	$(SRCDIR)/%.$(SRCEXT) $(ALLDEP)
 	@mkdir -p $(BUILDDIR)
