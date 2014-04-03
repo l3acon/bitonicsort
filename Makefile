@@ -1,67 +1,56 @@
-# OpenCL FingerPrints
-# EB May 2011
+CC := g++
+CFLAGS := -g -O3  -Wall #-v  
+ALLDEPS := 
+SRCDIR := src
+BUILDDIR := build
 
-# archive data
-CURRENT_DATE := $(shell date +%Y%m%d_%Hh%M)
-CURRENT_DIR := $(notdir $(shell /bin/pwd))
-CURRENT_MACHINE := $(shell uname -m)
+#these might not necessarily be right
+AMDAPPDIR :=/opt/AMDAPP/include/
+NVIDIASDKDIR :=/usr/local/cuda
+INTELSDKDIR :=/usr/lib64/OpenCL/vendors/intel
 
-# output directories
-DEPDIR := deps
-OBJDIR := objs
-BINDIR := bin
+# assume there's only one SDK installed
+VENDOR_SA := $(shell [ -d $(AMDAPPDIR) ] && echo "AMD")
+VENDOR_SN := $(shell [ -d $(NVIDIASDKDIR) ] && echo "NVIDIA")
+VENDOR_SI := $(shell [ -d $(INTELSDKDIR) ] && echo "INTEL")
 
-# targets
-PROGS = t_sort
-BINS = $(patsubst %,bin/%,$(PROGS))
-OBJS = $(patsubst %,$(OBJDIR)/%.o,$(PROGS) GeneratedOpenCLKernelSource TestFunctions) $(LIBOBJS)
-DEPS = $(patsubst $(OBJDIR)/%.o, $(DEPDIR)/%.d, $(OBJS))
+# using uname to deterime operating system
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	ifeq ($(VENDOR_SA),AMD)
+	LIBDIR :=$(AMDAPPDIR)
+	endif
+	ifeq ($(VENDOR_SN),NVIDIA)
+	LIBDIR :=$(NVIDIASDKDIR)
+	endif
+	ifeq ($(VENDOR_SI),INTEL)
+	LIBDIR :=$(INTELSDKDIR)
+	endif
+	FW := -lOpenCL
+	LIB := -lm -lrt
+endif
 
-# flags
-CXXFLAGS = -DLinux -g -mtune=nocona -Wall -I src -I /opt/AMDAPP/include -I MiniCL/src
-LDFLAGS = -lOpenCL
+#assume this works for all macs
+ifeq ($(UNAME_S),Darwin)
+    FW := -framework OpenCL
+    LIBDIR := /usr/local/include
+    LIB := -lm	#mac doesn't have "linux real time"
+endif
 
-all: $(BINS)
+SRCEXT := cpp
+HDRPAT := -name *.h
+SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
+HEADERS := $(shell find $(SRCDIR) -type f $(HDRPAT))
+ALLDEP += $(HEADERS)
+OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
+INC := -I include -I$(LIBDIR)
 
-src/GeneratedOpenCLKernelSource.cpp: src/SortKernels.cl MiniCL/file_to_string.py
-	MiniCL/file_to_string.py -i src/SortKernels.cl -o "$@" -s OpenCLKernelSource
+all: $(OBJECTS)
+	@echo "$(CC) $(CFLAGS) $(LIB) $(FW) -I /opt/AMDAPP/lib/ $(INC) -o build/out $(OBJECTS)" ; $(CC) $(CFLAGS) $(LIB) $(FW) $(INC) -o build/out $(OBJECTS)
 
-bin/t_sort: $(OBJS)
-	c++ -o $@ $(OBJDIR)/t_sort.o $(OBJDIR)/TestFunctions.o $(OBJDIR)/GeneratedOpenCLKernelSource.o $(LDFLAGS)
-
-dos2unix:
-	dos2unix Makefile *.cpp *.h *.cl *.py
+$(BUILDDIR)/%.o:	$(SRCDIR)/%.$(SRCEXT) $(ALLDEP)
+	@mkdir -p $(BUILDDIR)
+	@echo "$(CC) $(CFLAGS) $(INC) -c -o $@ $<"; $(CC) $(CFLAGS) $(INC) -c -o $@ $<
 
 clean:
-	find . \( -name "*.o" -o -name "*~" \) -exec /bin/rm {} \;
-	find . \( -name "*.cpp" -o -name "*.h" -o -name "Makefile" \) -exec chmod 644 {} \;
-	find . \( -name "*.py" \) -exec chmod 755 {} \;
-	/bin/rm -rf $(DEPDIR) $(OBJDIR) $(BINDIR) src/GeneratedOpenCLKernelSource.cpp
-
-archive: clean
-	@echo "ARCHIVE $(CURRENT_DATE)"
-	tar czf "../OpenCLfingerprints-$(CURRENT_DATE).tar.gz" -C.. --exclude=".svn" $(CURRENT_DIR)
-
-# Dependencies
-$(DEPDIR)/%.d: src/%.cpp
-	@[ -d $(DEPDIR) ] || mkdir -p $(DEPDIR)
-	@[ -d $(BINDIR) ] || mkdir -p $(BINDIR)
-	@/bin/echo -e "DEPS \033[32m$*\033[0m"
-	@$(CXX) $(CXXFLAGS) -o $@ -MM -MT '$(OBJDIR)/$*.o $@' $<
-$(DEPDIR)/%.d: generated/%.cpp
-	@[ -d $(DEPDIR) ] || mkdir -p $(DEPDIR)
-	@[ -d $(BINDIR) ] || mkdir -p $(BINDIR)
-	@/bin/echo -e "DEPS \033[32m$*\033[0m"
-	@$(CXX) $(CXXFLAGS) -o $@ -MM -MT '$(OBJDIR)/$*.o $@' $<
-
-# Compilation
-$(OBJDIR)/%.o: src/%.cpp
-	@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
-	@/bin/echo -e "C++  \033[34m$*\033[0m"
-	@$(CXX) $(CXXFLAGS) -c -o $@ $<
-$(OBJDIR)/%.o: generated/%.cpp
-	@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
-	@/bin/echo -e "C++  \033[34m$*\033[0m"
-	@$(CXX) $(CXXFLAGS) -c -o $@ $<
-
--include $(DEPS)
+	rm build/*.o
