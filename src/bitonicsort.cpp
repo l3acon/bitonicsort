@@ -6,6 +6,8 @@
 
 #include "cli.h"
 #include "kernels.h"
+#include "stl.h"
+
 #define CL_ERRORS 1
 #define NORMALS
 #define DATA_TYPE int 
@@ -22,19 +24,39 @@
 
 int main() 
 {
-    srand(time(NULL));
+		const char* stlFile = "Ring.stl";
 
     std::vector<cl_int> errors;
+    std::vector<float> verticies;
+    std::vector<float> normals;
+        
+		//later we can just use the memory in a std::vector?
+    float * vertexBuffer;
+    float * normalBuffer;
+
+    //file stuff
+    if(stlRead(stlFile, verticies, normals))
+    {
+     std::cout<<"ERROR: reading file"<<std::endl;
+        return 1;
+    }
+
+    //check sanity for verticies and normals
+    if( fmod(verticies.size(),9.0) !=  0 || fmod(normals.size(),3.0) != 0 )
+    {
+        std::cout<<"ERROR: verticies and normals don't make sense up"<<std::endl;
+        return 1;
+    }
 
     cl_int clStatus;
 
     CLI *cli_bsort = (CLI*) malloc( sizeof(CLI));
     cliInitialize(cli_bsort, errors);
     cliBuild(
-    cli_bsort,
-		bitonic_sort_kernel_source,
-		"_kbitonic_sort_kernel",
-    errors);
+    	cli_bsort,
+			bitonic_sort_kernel_source,
+			"_kbitonic_sort_kernel",
+    	errors);
 		
     // Basic initialization and declaration...
     // Execute the OpenCL kernel on the list
