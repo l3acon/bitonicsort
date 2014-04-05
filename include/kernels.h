@@ -1,13 +1,14 @@
 #ifndef KERNELS_H
 #define KERNELS_H
 
-typedef struct vertex_t {
+typedef struct vertex_t 
+{
   float x1, y1, z1;
   float x2, y2, z2;
   float x3, y3, z3;
 } Vertex;
 
-const char * _kstlcl_bitonic_sort_source = 
+const char * bitonic_STL_sort_source = 
 " void _kbitonic_stl_sort(                          		          	"
 "\n             __global Vertex *input_ptr,                   	        "
 "\n             const unsigned int stage,                              "
@@ -126,10 +127,10 @@ const char * bitonic_sort_kernel_source  =
 //The bitonic sort kernel does an ascending sort 
 const char * original_kernel_source = 
 " __kernel                                                      "
-" \n void _kbitonic_sort_kernel(	                              "
-" \n 			__global int * input_ptr,                             "
-" \n     	const uint stage,                                     "
-" \n     	const uint passOfStage )                              "
+" \n void _kbitonic_sort_kernel(	                            "
+" \n 			__global int * input_ptr,                       "
+" \n     	const uint stage,                                   "
+" \n     	const uint passOfStage )                            "
 " \n {                                                          "
 " \n     uint threadId = get_global_id(0);                      "
 " \n     uint pairDistance = 1 << (stage - passOfStage);        "
@@ -149,7 +150,7 @@ const char * original_kernel_source =
 " \n     uint sameDirection = sameDirectionBlockWidth & 0x1;    "
 " \n                                                            "
 " \n     temp = sameDirection ? rightId : temp;                 "
-" \n     rightId = sameDirection	? leftId : rightId;           "
+" \n     rightId = sameDirection	? leftId : rightId;         "
 " \n     leftId = sameDirection ? temp : leftId;                "
 " \n                                                            "
 " \n     compareResult = (leftElement < rightElement) ;         "
