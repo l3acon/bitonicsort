@@ -103,7 +103,7 @@ int main()
     cl_mem pInputBuffer_clmem = clCreateBuffer(
         cli_bsort->context, 
         CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-        padded_size * sizeof(float), 
+        padded_size * sizeof(Vertex), 
         (Vertex*) &verticies.front(), 
         &clStatus);
   	errors.push_back(clStatus); 
