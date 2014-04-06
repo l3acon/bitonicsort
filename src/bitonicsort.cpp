@@ -35,9 +35,11 @@ int main()
     std::vector<float> verticies;
     std::vector<float> normals;
 
+    //std::vector<float> overt;
+
     if(stlRead(stlFile, verticies, normals))
     {
-     std::cout<<"ERROR: reading file"<<std::endl;
+        std::cout<<"ERROR: reading file"<<std::endl;
         return 1;
     }
 
@@ -48,14 +50,21 @@ int main()
         return 1;
     }
 
+    //for (int i = 0; i < overt.size(); ++i)
+    //{
+    //    verticies.push_back(overt[i]);
+    //}
 
+    for (int i = 2; i < verticies.size(); i+=9)
+    {
+        printf("%d: %f\n", i, verticies[i]);
+    }
     //  --------------------------
     //
     // pad our verticies with -1's
     //
     //  --------------------------
-
-    unsigned int n = verticies.size()-1;
+    unsigned int n = verticies.size()/9 - 1;
     unsigned int p2 = 0;
     
     size_t original_vertex_size = verticies.size();
@@ -63,7 +72,7 @@ int main()
     size_t padded_size = 0x1 << p2;
 
     // it just needs to be larger really
-    while(verticies.size() < padded_size)
+    while(verticies.size()/9 < padded_size)
         verticies.push_back(-1.0);
 
     //  --------------------------
@@ -71,7 +80,6 @@ int main()
     // OpenCL stuff
     //
     //  --------------------------
-
     cl_int clStatus;
 
     CLI *cli_bsort = (CLI*) malloc( sizeof(CLI));
@@ -81,7 +89,7 @@ int main()
         bitonic_STL_sort_source,
         "_kbitonic_stl_sort",
         errors);
-
+    
     // Basic initialization and declaration...
     // Execute the OpenCL kernel on the list
     // Each work item shall compare two elements.
@@ -94,10 +102,9 @@ int main()
     //Create memory buffers on the device for each vector
     cl_mem pInputBuffer_clmem = clCreateBuffer(
         cli_bsort->context, 
-        CL_MEM_READ_WRITE |
-        CL_MEM_USE_HOST_PTR,
+        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
         padded_size * sizeof(float), 
-        &verticies.front(), 
+        (Vertex*) &verticies.front(), 
         &clStatus);
   	errors.push_back(clStatus); 
     // create kernel
@@ -106,7 +113,7 @@ int main()
         cli_bsort->kernel, 
         0, 
         sizeof(cl_mem), 
-        (void *)&pInputBuffer_clmem);
+        (void *) &pInputBuffer_clmem);
 
     unsigned int stage, passOfStage, numStages, temp;
     stage = passOfStage = numStages = 0;
@@ -160,14 +167,14 @@ int main()
         } //end of for passStage = 0:stage-1
     } //end of for stage = 0:numStage-1
  
-    float *mapped_input_buffer =  
-        (float *)clEnqueueMapBuffer(
+    Vertex *mapped_input_buffer =  
+        (Vertex *)clEnqueueMapBuffer(
             cli_bsort->cmdQueue, 
             pInputBuffer_clmem, 
             true, 
             CL_MAP_READ, 
             0, 
-            sizeof(float) * padded_size, 
+            sizeof(Vertex) * padded_size, 
             0, 
             NULL, 
             NULL, 
@@ -175,16 +182,16 @@ int main()
 
 		errors.push_back(clStatus);
 
+    PrintCLIStatus(errors);
 
-    //Display the Sorted data on the screen
-    for(int i = 0; i < padded_size-1; i++)
+    //Display the Sorted data on the screenm
+    for(int i = 0; i < padded_size; i++)
     {
-        if(mapped_input_buffer[i+1] < mapped_input_buffer[i])
-          printf( "%d: FAILED: %d < %d \n", i, mapped_input_buffer[i+1], mapped_input_buffer[i+1]);
-        //printf("%d: %d\n", i, mapped_input_buffer[i]);
+        //if(mapped_input_buffer[i+1].z1 < mapped_input_buffer[i].z1 )
+          //printf( "%d: FAILED: %d < %d \n", i, mapped_input_buffer[i+1].z1, mapped_input_buffer[i+1].z1 );
+        printf("%d: %f\n", i, mapped_input_buffer[i].z1 );
     }
 		
-		PrintCLIStatus(errors);
     // cleanup...
     return 0;
 }
