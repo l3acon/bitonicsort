@@ -55,10 +55,6 @@ int main()
     //    verticies.push_back(overt[i]);
     //}
 
-    for (int i = 2; i < verticies.size(); i+=9)
-    {
-        printf("%d: %f\n", i, verticies[i]);
-    }
     //  --------------------------
     //
     // pad our verticies with -1's
@@ -71,9 +67,14 @@ int main()
     do ++p2; while( (n >>= 0x1) != 0);
     size_t padded_size = 0x1 << p2;
 
+    unsigned int padd = 0;
+
     // it just needs to be larger really
     while(verticies.size()/9 < padded_size)
+    {
         verticies.push_back(-1.0);
+        ++padd;
+    }
 
     //  --------------------------
     //
@@ -103,7 +104,7 @@ int main()
     cl_mem pInputBuffer_clmem = clCreateBuffer(
         cli_bsort->context, 
         CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-        padded_size * sizeof(float), 
+        padded_size * sizeof(Vertex), 
         (Vertex*) &verticies.front(), 
         &clStatus);
   	errors.push_back(clStatus); 
@@ -138,7 +139,7 @@ int main()
             ++passOfStage) 
         {
             // pass of the current stage
-            //printf("Pass no: %d\n",passOfStage);
+            printf("Pass no: %d\n",passOfStage);
             clStatus = clSetKernelArg(
                 cli_bsort->kernel, 
                 2, 
@@ -167,7 +168,7 @@ int main()
         } //end of for passStage = 0:stage-1
     } //end of for stage = 0:numStage-1
  
-    Vertex *mapped_input_buffer =  
+    Vertex *mapped_input_buffer =
         (Vertex *)clEnqueueMapBuffer(
             cli_bsort->cmdQueue, 
             pInputBuffer_clmem, 
@@ -182,15 +183,43 @@ int main()
 
 		errors.push_back(clStatus);
 
+
+    //  --------------------------
+    //
+    // Done
+    //
+    //  --------------------------
+
     PrintCLIStatus(errors);
+    std::vector<float> output;
+
+    for (int i = padd; i < padded_size; ++i)
+    {
+        /* code */
+    }
+
+    int count=0; 
+    for (int i = 0; i < verticies.size(); ++i)
+    {
+        if(verticies[i] == -1.0)
+            count++;
+    }
 
     //Display the Sorted data on the screenm
     for(int i = 0; i < padded_size; i++)
     {
-        //if(mapped_input_buffer[i+1].z1 < mapped_input_buffer[i].z1 )
-          //printf( "%d: FAILED: %d < %d \n", i, mapped_input_buffer[i+1].z1, mapped_input_buffer[i+1].z1 );
-        printf("%d: %f\n", i, mapped_input_buffer[i].z1 );
+        printf("i: %d : %f\n",i, mapped_input_buffer[i].x1 );   
+        printf("i: %d : %f\n",i, mapped_input_buffer[i].y1 );    
+        printf("i: %d : %f\n",i, mapped_input_buffer[i].z1 );    
+        printf("i: %d : %f\n",i, mapped_input_buffer[i].x2 );   
+        printf("i: %d : %f\n",i, mapped_input_buffer[i].y2 );    
+        printf("i: %d : %f\n",i, mapped_input_buffer[i].z2 );    
+        printf("i: %d : %f\n",i, mapped_input_buffer[i].x3 );   
+        printf("i: %d : %f\n",i, mapped_input_buffer[i].y3 );    
+        printf("i: %d : %f\n",i, mapped_input_buffer[i].z3 );    
+
     }
+    printf("think2: %d\n", padded_size*9 - padd);
 		
     // cleanup...
     return 0;
