@@ -219,7 +219,7 @@ int main()
         printf("i: %d : %f\n",i, mapped_input_buffer[i].z3 );    
 
     }
-    printf("think2: %d\n", padded_size*9 - padd);
+    printf("think2: %d\n", padd);
 		
     // cleanup...
     return 0;
