@@ -104,8 +104,8 @@ int main()
     cl_mem pInputBuffer_clmem = clCreateBuffer(
         cli_bsort->context, 
         CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-        padded_size * sizeof(Vertex), 
-        (Vertex*) &verticies.front(), 
+        padded_size * verticies.size()*sizeof(float), 
+        (float*) &verticies.front(), 
         &clStatus);
   	errors.push_back(clStatus); 
     // create kernel
@@ -168,14 +168,14 @@ int main()
         } //end of for passStage = 0:stage-1
     } //end of for stage = 0:numStage-1
  
-    Vertex *mapped_input_buffer =
-        (Vertex *)clEnqueueMapBuffer(
+    float *mapped_input_buffer =
+        (float *)clEnqueueMapBuffer(
             cli_bsort->cmdQueue, 
             pInputBuffer_clmem, 
             true, 
             CL_MAP_READ, 
             0, 
-            sizeof(Vertex) * padded_size, 
+            sizeof(float) *9* padded_size, 
             0, 
             NULL, 
             NULL, 
@@ -193,11 +193,6 @@ int main()
     PrintCLIStatus(errors);
     std::vector<float> output;
 
-    for (int i = padd; i < padded_size; ++i)
-    {
-        /* code */
-    }
-
     int count=0; 
     for (int i = 0; i < verticies.size(); ++i)
     {
@@ -208,18 +203,8 @@ int main()
     //Display the Sorted data on the screenm
     for(int i = 0; i < padded_size; i++)
     {
-        printf("i: %d : %f\n",i, mapped_input_buffer[i].x1 );   
-        printf("i: %d : %f\n",i, mapped_input_buffer[i].y1 );    
-        printf("i: %d : %f\n",i, mapped_input_buffer[i].z1 );    
-        printf("i: %d : %f\n",i, mapped_input_buffer[i].x2 );   
-        printf("i: %d : %f\n",i, mapped_input_buffer[i].y2 );    
-        printf("i: %d : %f\n",i, mapped_input_buffer[i].z2 );    
-        printf("i: %d : %f\n",i, mapped_input_buffer[i].x3 );   
-        printf("i: %d : %f\n",i, mapped_input_buffer[i].y3 );    
-        printf("i: %d : %f\n",i, mapped_input_buffer[i].z3 );    
-
+	  printf("i=%d: %f \n", i, mapped_input_buffer[i*9+2]); 
     }
-    printf("think2: %d\n", padd);
 		
     // cleanup...
     return 0;
